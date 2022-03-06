@@ -1,79 +1,200 @@
 const formidable = require('formidable');
 const validator = require('validator');
+const registerModel = require('../models/authModel');
 const fs = require('fs');
 const bcrypt = require('bcrypt');
+// const jwt = require('jsonwebtoken');
 
-module.exports.registeredUser = (req, res) => {
-    // console.log('user registered');
+module.exports.userRegister = async (req, res) => {
 
-    const formData = formidable();
-            formData.parse(req, async (err, fields, files) => {
-                // console.log(fields);
-                // console.log(files.image);
+    console.log(req.body);
 
-                const { userName, email, password, confirmPassword } = fields;
-                const { image } = files;
-                // console.log(image.originalFilename);
+    // const form = formidable();
+    const {
+        userName,
+        email,
+        password,
+        confirmPassword, 
+        image
+    } = req.body;
 
-                const error = [];
+    const error = [];
 
-                if(!userName){
-                    error.push('Please, provide your user name');
-                }
-                if(!email || !validator.isEmail(email)){
-                    error.push('Please, provide your valid email');
-                }
-                if(!password){
-                    error.push('Please, provide your password');
-                }
-                if(!confirmPassword){
-                    error.push('Please, fill out confirm password');
-                }
-                if(password && confirmPassword && password !== confirmPassword){
-                    error.push("Password didn't match");
-                }
-                if(password && password.length < 6){
-                    error.push('Password must be greater than 6 characters');
-                }
-                if(Object.keys(files).length === 0){
-                    error.push('Please, provide your image')
-                }
-                if(error.length > 0){
-                    res.status(400).json({error: { errorMessage: error}});
-                }else{
-                    const getImageName = image.originalFilename;
-                    console.log(image.filepath)
-
-                    const randomNumber = Math.floor(Math.random() * 99999);
-                    const newImageName = randomNumber + getImageName;
-                    files.image.originalFilename = newImageName;
-
-                    const newPath = __dirname + `../frontend/public/images/${files.image.originalFilename}`;
-
-                    try {
-                        const checkUser = await registeredUser.findOne({email: email});
-
-                        if(checkUser){
-                            res.status(404).json({error:{errorMessage:['This already existed']}});
-                        }else{
-                            fs.copyFile(files.image.filepath, newPath, async (error) => {
-                                if(!error){
-                                    const userCreate = await registeredUser.insertOne({
-                                        userName,
-                                        email,
-                                        password: await bcrypt.hash(password,10),
-                                        image: files.image.originalFilename
-                                    });
-                                    console.log(userCreate);
-
-                                    console.log('Registration successfully done');
-                                }
-                            })
-                        }
-                    } catch (error) {
-                        console.log(error);
-                    }
-
+        if (!userName) {
+            error.push('please provide your user name');
+        }
+        if (!email) {
+            error.push('please provide your email');
+        }
+        if (email && !validator.isEmail(email)) {
+            error.push('please provide your valid email');
+        }
+        if (!password) {
+            error.push('please provide your password');
+        }
+        if (!confirmPassword) {
+            error.push('please provide user confirm password');
+        }
+        if (password && confirmPassword && password !== confirmPassword) {
+            error.push('your password and confirm password not same')
+        }
+        if (password && password.length < 6) {
+            error.push('please provide password must be 6 charecter');
+        }
+        if (!image) {
+            error.push('please provide user image');
+        }
+        if (error.length > 0) {
+            res.status(400).json({
+                error: {
+                    errorMessage: error
                 }
             })
+        } else {
+
+            try {
+                const checkUser = await registerModel.findOne({ email: email });
+                if(checkUser){
+                    res.status(404).json({
+                        error: { errorMessage: ['Your Email is already existed']}
+                    })
+                }else{
+                    const userCreate = await registerModel.create({
+                                    userName,
+                                    email,
+                                    password: await bcrypt.hash(password, 10),
+                                    image
+                                });
+                }
+            } catch (error) {
+                res.status(404).json({
+                                error: {
+                                    errorMessage: ['Internal server error']
+                                }
+                            })
+            }               
+
+        }
 }
+
+// fs.copyFile(files.image.path, newPath, async (error) => {
+                    //     if (!error) {
+                            
+
+                            // const token = jwt.sign({
+                            //     id: userCreate._id,
+                            //     email: userCreate.email,
+                            //     userName: userCreate.userName,
+                            //     image: userCreate.image,
+                            //     registerTime: userCreate.createAt
+                            // }, process.env.SECRET, {
+                            //     expiresIn: process.env.TOKEN_EXP
+                            // });
+
+                            // const options = {
+                            //     expires: new Date(Date.now() + process.env.COOKIE_EXP * 24 * 60 * 60 * 1000)
+                            // }
+
+                            // res.status(201).cookie('authToken', token, options).json({
+                            //     successMessage: 'Your Register successfull',
+                            //     token
+                            // })
+                        // } else {
+                        //     res.status(404).json({
+                        //         error: {
+                        //             errorMessage: ['Internal server error']
+                        //         }
+                        //     })
+                        // }
+        //             })
+        //         }
+        //     } catch (error) {
+        //         res.status(404).json({
+        //             error: {
+        //                 errorMessage: ['Internal server error']
+        //             }
+        //         })
+        //     }
+        // }
+
+// module.exports.userLogin = async (req, res) => {
+
+//     const error = [];
+//     const {
+//         email,
+//         password
+//     } = req.body;
+//     if (!email) {
+//         error.push('Please provide your email')
+//     }
+//     if (!password) {
+//         error.push('Please provide your password')
+//     }
+//     if (email && !validator.isEmail(email)) {
+//         error.push('Please provide your valid email');
+//     }
+//     if (error.length > 0) {
+//         res.status(400).json({
+//             error: {
+//                 errorMessage: error
+//             }
+//         });
+//     } else {
+//         try {
+//             const checkUser = await registerModel.findOne({
+//                 email: email
+//             }).select('+password');
+
+//             if (checkUser) {
+//                 const matchPassword = await bcrypt.compare(password, checkUser.password);
+
+//                 if (matchPassword) {
+//                     const token = jwt.sign({
+//                         id: checkUser._id,
+//                         email: checkUser.email,
+//                         userName: checkUser.userName,
+//                         image: checkUser.image,
+//                         registerTime: checkUser.createAt
+//                     }, process.env.SECRET, {
+//                         expiresIn: process.env.TOKEN_EXP
+//                     });
+
+//                     const options = {
+//                         expires: new Date(Date.now() + process.env.COOKIE_EXP * 24 * 60 * 60 * 1000)
+//                     }
+
+//                     res.status(200).cookie('authToken', token, options).json({
+//                         successMessage: 'Your login successfull',
+//                         token
+//                     })
+//                 } else {
+//                     res.status(400).json({
+//                         error: {
+//                             errorMessage: ['your password not valid']
+//                         }
+//                     });
+//                 }
+//             } else {
+//                 res.status(400).json({
+//                     error: {
+//                         errorMessage: ['your email not found']
+//                     }
+//                 });
+//             }
+
+//         } catch (error) {
+//             res.status(404).json({
+//                 error: {
+//                     errorMessage: ['Internal server error']
+//                 }
+//             });
+//         }
+//     }
+
+// }
+
+// module.exports.userLogout = (req,res)=>{
+//     res.status(200).cookie('authToken', '').json({
+//         success : true
+//     })
+// }
