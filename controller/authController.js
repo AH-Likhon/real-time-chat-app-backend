@@ -1,80 +1,11 @@
 const formidable = require('formidable');
-const validator = require('validator');
 const registerModel = require('../models/authModel');
 const fs = require('fs');
-const bcrypt = require('bcrypt');
-// const jwt = require('jsonwebtoken');
+
 
 module.exports.userRegister = async (req, res) => {
 
-    console.log(req.body);
-
-    // const form = formidable();
-    const {
-        userName,
-        email,
-        password,
-        confirmPassword, 
-        image
-    } = req.body;
-
-    const error = [];
-
-        if (!userName) {
-            error.push('please provide your user name');
-        }
-        if (!email) {
-            error.push('please provide your email');
-        }
-        if (email && !validator.isEmail(email)) {
-            error.push('please provide your valid email');
-        }
-        if (!password) {
-            error.push('please provide your password');
-        }
-        if (!confirmPassword) {
-            error.push('please provide user confirm password');
-        }
-        if (password && confirmPassword && password !== confirmPassword) {
-            error.push('your password and confirm password not same')
-        }
-        if (password && password.length < 6) {
-            error.push('please provide password must be 6 charecter');
-        }
-        if (!image) {
-            error.push('please provide user image');
-        }
-        if (error.length > 0) {
-            res.status(400).json({
-                error: {
-                    errorMessage: error
-                }
-            })
-        } else {
-
-            try {
-                const checkUser = await registerModel.findOne({ email: email });
-                if(checkUser){
-                    res.status(404).json({
-                        error: { errorMessage: ['Your Email is already existed']}
-                    })
-                }else{
-                    const userCreate = await registerModel.create({
-                                    userName,
-                                    email,
-                                    password: await bcrypt.hash(password, 10),
-                                    image
-                                });
-                }
-            } catch (error) {
-                res.status(404).json({
-                                error: {
-                                    errorMessage: ['Internal server error']
-                                }
-                            })
-            }               
-
-        }
+    
 }
 
 // fs.copyFile(files.image.path, newPath, async (error) => {
