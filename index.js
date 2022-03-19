@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors');
 const bcrypt = require('bcrypt');
 const validator = require('validator');
 const jwt = require('jsonwebtoken');
@@ -14,6 +15,8 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
 
+app.use(cors());
+app.use(express.json());
 app.use(bodyParser.json());
 app.use(cookieParser());
 
@@ -22,6 +25,7 @@ async function run() {
         await client.connect();
         const database = client.db('Messenger');
         const users = database.collection('users');
+        const userLogin = database.collection('user-login');
 
 
         // get a user
@@ -42,6 +46,8 @@ async function run() {
                 confirmPassword, 
                 image
             } = req.body;
+
+            console.log(req.body)
 
             let error = "";
 
@@ -87,7 +93,7 @@ async function run() {
                     
                 try {
                     const checkUser = await users.findOne({ email: email });
-                    console.log(checkUser);
+                    // console.log(checkUser);
 
                     if(checkUser){
                         error = "Your email is already registered";
@@ -104,42 +110,111 @@ async function run() {
 
         
 
-                        // console.log(token);
+                        const token = jwt.sign({
+                            userName,
+                            email,
+                            password: await bcrypt.hash(password, 10),
+                            image,
+                            expires : new Date(Date.now() + process.env.COOKIE_EXP * 24 * 60 * 60 * 1000),
+                            registerTime: new Date()
+                        }, process.env.SECRET, {
+                            expiresIn: process.env.TOKEN_EXP
+                        });
+                        console.log(token);
 
                         // const result = user;
                         console.log(user);
 
-                        // const token = jwt.sign({
-                        //         id: user._id,
-                        //         email: user.email,
-                        //         userName: user.userName,
-                        //         image: user.image,
-                        //         registerTime: user.registerTime
-                        //     }, process.env.SECRET, {
-                        //         expiresIn: process.env.TOKEN_EXP
-                        //     });
-
-                        // res.send(token);
                         const options = {
                             expires : new Date(Date.now() + process.env.COOKIE_EXP * 24 * 60 * 60 * 1000)
                         }
 
-                        res.cookie('authToken', user, options).json(user);
+                        res.cookie('authToken', token, options).json({
+                            successMessage: 'Successfully Registered',
+                            token
+                        });
 
                         // res.json(token);
                     }
                     console.log(error);
 
                 } catch (error) {
-                    res.status(500).json({
-                                    error: {
-                                        errorMessage: 'Internal server error'
-                                    }
-                                })
+                    error = "Internal server error";
+                    res.json({ error });
                 }               
 
             }
         });
+
+
+        // login post user
+        app.post('/user-login', async (req, res) => {
+            // console.log(req.body);
+            const { email, password } = req.body;
+
+            let error = "";
+
+            if ( !email || !password ) {
+                error = "Fill up the input fields!";
+                // res.json({ error })
+            }
+            if( !email && password ){
+                error = "Please, provide your email!";
+            }
+            if( email && !password){
+                error = "Please, provide your password";
+            }
+            if(email && !validator.isEmail(email)){
+                error = "Please, provide your valid email";
+            }
+
+            if(error){
+                res.json({ error });
+            }else{
+
+                try {
+                    const checkUser = await users.findOne({ email: email });
+
+                    if(checkUser){
+                        const matchPassword = await bcrypt.compare(password, checkUser.password);
+
+                        if(matchPassword){
+
+                            const token = jwt.sign({
+                                id: checkUser._id,
+                                email: checkUser.email,
+                                userName: checkUser.userName,
+                                image: checkUser.image,
+                                registerTime: checkUser.registerTime
+                            }, process.env.SECRET, {
+                                expiresIn: process.env.TOKEN_EXP
+                            });
+
+                            const result = await userLogin.insertOne(checkUser);
+                            console.log(result);
+
+                            const options = {
+                                expires : new Date(Date.now() + process.env.COOKIE_EXP * 24 * 60 * 60 * 1000)
+                            }
+    
+                            res.cookie('authToken', token, options).json({
+                                successMessage: 'Successfully login',
+                                token
+                            });
+                        }else{
+                            error = "Your password didn't match";
+                            res.json({ error });
+                        }
+                    }else{
+                        error = "Your email didn't find";
+                        res.json({ error });
+                    }
+                } catch (error){
+                    error = "Internal Server Error";
+                    res.json({ error });
+                }
+            }
+        })
         
     }
     finally {
