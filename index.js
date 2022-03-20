@@ -215,6 +215,20 @@ async function run() {
                 }
             }
         })
+
+
+        // get friends
+        app.get('/get-friends', async (req, res) => {
+            try {
+                const getFriends = await users.find({}).toArray();
+                res.json({ 
+                    success: true, 
+                    friends: getFriends
+                })
+            } catch (error) {
+                res.json({ errorMessage: 'Internal Server Error'});
+            }
+        })
         
     }
     finally {
