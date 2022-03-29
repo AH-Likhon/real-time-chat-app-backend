@@ -270,7 +270,8 @@ async function run() {
             const { senderId, senderName, receiverId, message } = req.body;
 
             try {
-                const insertMessage = await sendMessage.insertOne({
+
+                await sendMessage.insertOne({
                     senderId,
                     senderName,
                     receiverId,
@@ -278,7 +279,8 @@ async function run() {
                         text: message,
                         image: ''
                     }
-                })
+                });
+
                 res.json({
                     success: true,
                     message: {
@@ -288,6 +290,38 @@ async function run() {
                         message: {
                             text: message,
                             image: ''
+                        }
+                    }
+                })
+            } catch (error) {
+                res.json({ errorMessage: 'Internal Server Error' });
+            }
+        })
+
+        app.post('/image-message', async (req, res) => {
+            const { senderId, senderName, receiverId, image } = req.body;
+
+            try {
+
+                await sendMessage.insertOne({
+                    senderId,
+                    senderName,
+                    receiverId,
+                    message: {
+                        text: '',
+                        image: image
+                    }
+                });
+
+                res.json({
+                    success: true,
+                    message: {
+                        senderId,
+                        senderName,
+                        receiverId,
+                        message: {
+                            text: '',
+                            image: image
                         }
                     }
                 })
