@@ -1,7 +1,6 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
@@ -17,15 +16,24 @@
     "concurrently": "^7.0.0",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
-    "dotenv": "^16.0.0",
-    "express": "^4.17.3",
+    "dotenv": "^16.0.1",
+    "express": "^4.18.1",
     "express-fileupload": "^1.3.1",
     "formidable": "^2.0.1",
     "helmet": "^5.0.2",
     "jsonwebtoken": "^8.5.1",
-    "mongodb": "^4.4.0",
+    "mongodb": "^4.7.0",
     "mongoose": "^6.2.4",
-    "nodemon": "^2.0.15",
+    "nodemon": "^2.0.18",
     "validator": "^13.7.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AH-Likhon/real-time-chat-app-backend.git"
+  },
+  "bugs": {
+    "url": "https://github.com/AH-Likhon/real-time-chat-app-backend/issues"
+  },
+  "homepage": "https://github.com/AH-Likhon/real-time-chat-app-backend#readme",
+  "description": ""
 }
