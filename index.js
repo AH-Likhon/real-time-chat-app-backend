@@ -145,7 +145,11 @@ async function run() {
                             expires: new Date(Date.now() + process.env.COOKIE_EXP * 24 * 60 * 60 * 1000)
                         }
 
-                        res.status(201).cookie('authToken', token, options).json({
+                        // res.status(201).cookie('authToken', token, options).json({
+                        //     successMessage: 'Successfully Registered',
+                        //     token
+                        // });
+                        res.json({
                             successMessage: 'Successfully Registered',
                             token
                         });
@@ -215,7 +219,11 @@ async function run() {
                                 expires: new Date(Date.now() + process.env.COOKIE_EXP * 24 * 60 * 60 * 1000)
                             }
 
-                            res.status(201).cookie('authToken', token, options).json({
+                            // res.status(201).cookie('authToken', token, options).json({
+                            //     successMessage: 'Successfully login',
+                            //     token
+                            // });
+                            res.json({
                                 successMessage: 'Successfully login',
                                 token
                             });
