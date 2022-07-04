@@ -259,6 +259,9 @@ async function run() {
 
         // get friends
         app.get('/get-friends', async (req, res) => {
+
+            console.log('Body', req.body);
+
             try {
                 const getFriends = await users.find({}).toArray();
                 res.json({
@@ -296,6 +299,7 @@ async function run() {
                     senderId,
                     senderName,
                     receiverId,
+                    createdAt: new Date(Date.now()),
                     message: {
                         text: message,
                         image: ''
@@ -308,6 +312,7 @@ async function run() {
                         senderId,
                         senderName,
                         receiverId,
+                        createdAt: new Date(Date.now()),
                         message: {
                             text: message,
                             image: ''
@@ -328,6 +333,7 @@ async function run() {
                     senderId,
                     senderName,
                     receiverId,
+                    createdAt: new Date(Date.now()),
                     message: {
                         text: '',
                         image: image
@@ -340,6 +346,7 @@ async function run() {
                         senderId,
                         senderName,
                         receiverId,
+                        createdAt: new Date(Date.now()),
                         message: {
                             text: '',
                             image: image
