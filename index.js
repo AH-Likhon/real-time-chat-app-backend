@@ -63,7 +63,7 @@ async function run() {
                 image
             } = req.body;
 
-            console.log(req.body)
+            // console.log(req.body)
 
             let error = "";
 
@@ -136,10 +136,10 @@ async function run() {
                         }, process.env.SECRET, {
                             expiresIn: process.env.TOKEN_EXP
                         });
-                        console.log(token);
+                        // console.log(token);
 
                         // const result = user;
-                        console.log(user);
+                        // console.log(user);
 
                         const options = {
                             expires: new Date(Date.now() + process.env.COOKIE_EXP * 24 * 60 * 60 * 1000)
@@ -156,7 +156,7 @@ async function run() {
 
                         // res.json(token);
                     }
-                    console.log(error);
+                    // console.log(error);
 
                 } catch (error) {
                     error = "Internal server error";
@@ -213,7 +213,7 @@ async function run() {
                             });
 
                             const result = await userLogin.insertOne(checkUser);
-                            console.log(result);
+                            // console.log(result);
 
                             const options = {
                                 expires: new Date(Date.now() + process.env.COOKIE_EXP * 24 * 60 * 60 * 1000)
@@ -260,7 +260,7 @@ async function run() {
         // get friends
         app.get('/get-friends', async (req, res) => {
 
-            console.log('Body', req.body);
+            // console.log('Body', req.body);
 
             try {
                 const getFriends = await users.find({}).toArray();
@@ -278,7 +278,7 @@ async function run() {
         app.get('/get-message', async (req, res) => {
             try {
                 const getAllMessage = await sendMessage.find({}).toArray();
-                console.log(getAllMessage);
+                // console.log(getAllMessage);
                 res.json({
                     success: true,
                     getAllMessage
@@ -300,6 +300,7 @@ async function run() {
                     senderName,
                     receiverId,
                     createdAt: new Date(Date.now()),
+                    status: 'unseen',
                     message: {
                         text: message,
                         image: ''
@@ -308,11 +309,13 @@ async function run() {
 
                 res.json({
                     success: true,
+                    // message: newMessage
                     message: {
                         senderId,
                         senderName,
                         receiverId,
                         createdAt: new Date(Date.now()),
+                        status: 'unseen',
                         message: {
                             text: message,
                             image: ''
@@ -334,6 +337,7 @@ async function run() {
                     senderName,
                     receiverId,
                     createdAt: new Date(Date.now()),
+                    status: 'unseen',
                     message: {
                         text: '',
                         image: image
@@ -342,6 +346,7 @@ async function run() {
 
                 res.json({
                     success: true,
+                    // message: imgSMS
                     message: {
                         senderId,
                         senderName,
@@ -356,6 +361,11 @@ async function run() {
             } catch (error) {
                 res.json({ errorMessage: 'Internal Server Error' });
             }
+        })
+
+
+        app.post('/seen-sms', async (req, res) => {
+            console.log("Seen SMS Body: ", req.body);
         })
 
     }
