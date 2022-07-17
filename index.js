@@ -41,7 +41,7 @@ async function run() {
         const database = client.db('Messenger');
         const users = database.collection('users');
         const userLogin = database.collection('user-login');
-        const sendMessage = database.collection('send-message');
+        const sendMessage = database.collection('message');
 
 
         // get a user
@@ -291,16 +291,18 @@ async function run() {
 
         // insert message
         app.post('/send-message', async (req, res) => {
-            const { senderId, senderName, receiverId, message } = req.body;
+            const { senderId, senderName, receiverId, message, uid, status } = req.body;
 
             try {
 
                 await sendMessage.insertOne({
+                    // uid: new Date().getTime().toString(36) + Math.floor(new Date().valueOf() * Math.random()),
+                    uid,
                     senderId,
                     senderName,
                     receiverId,
                     createdAt: new Date(Date.now()),
-                    status: 'unseen',
+                    status,
                     message: {
                         text: message,
                         image: ''
@@ -311,11 +313,13 @@ async function run() {
                     success: true,
                     // message: newMessage
                     message: {
+                        // uid: new Date().getTime().toString(36) + Math.floor(new Date().valueOf() * Math.random()),
+                        uid,
                         senderId,
                         senderName,
                         receiverId,
                         createdAt: new Date(Date.now()),
-                        status: 'unseen',
+                        status,
                         message: {
                             text: message,
                             image: ''
@@ -328,16 +332,18 @@ async function run() {
         })
 
         app.post('/image-message', async (req, res) => {
-            const { senderId, senderName, receiverId, image } = req.body;
+            const { senderId, senderName, receiverId, image, uid, status } = req.body;
 
             try {
 
                 await sendMessage.insertOne({
+                    // uid: new Date().getTime().toString(36) + Math.floor(new Date().valueOf() * Math.random()),
+                    uid,
                     senderId,
                     senderName,
                     receiverId,
                     createdAt: new Date(Date.now()),
-                    status: 'unseen',
+                    status,
                     message: {
                         text: '',
                         image: image
@@ -348,10 +354,13 @@ async function run() {
                     success: true,
                     // message: imgSMS
                     message: {
+                        // uid: new Date().getTime().toString(36) + Math.floor(new Date().valueOf() * Math.random()),
+                        uid,
                         senderId,
                         senderName,
                         receiverId,
                         createdAt: new Date(Date.now()),
+                        status,
                         message: {
                             text: '',
                             image: image
@@ -364,9 +373,29 @@ async function run() {
         })
 
 
-        app.post('/seen-sms', async (req, res) => {
-            console.log("Seen SMS Body: ", req.body);
-        })
+        app.put('/seen-sms', async (req, res) => {
+            // console.log("Seen SMS Body: ", req.body.uid);
+            try {
+                const uidSMS = sendMessage.findOne({ uid: req.body.uid });
+
+                if (uidSMS) {
+                    const uid = req.body.uid;
+                    const filter = { uid: uid };
+                    const options = { upsert: true };
+                    const updateDoc = {
+                        $set: req.body,
+                    };
+                    const result = await sendMessage.updateOne(filter, updateDoc, options);
+                    console.log("Seen Result: ", result);
+                    res.json(result);
+                } else {
+                    console.log('wrong');
+                }
+
+            } catch (error) {
+                console.log(error);
+            }
+        });
 
     }
     finally {
