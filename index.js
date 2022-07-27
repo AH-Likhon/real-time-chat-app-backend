@@ -9,7 +9,7 @@ const dotenv = require('dotenv');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 dotenv.config();
-const { MongoClient } = require('mongodb');
+const { MongoClient, ObjectId } = require('mongodb');
 const { authMiddleware } = require('./middleware/authMiddleware');
 const PORT = process.env.PORT || 5000;
 
@@ -40,7 +40,7 @@ async function run() {
         await client.connect();
         const database = client.db('Messenger');
         const users = database.collection('users');
-        const userLogin = database.collection('user-login');
+        const userLogin = database.collection('login');
         const sendMessage = database.collection('message');
 
 
@@ -168,7 +168,7 @@ async function run() {
 
 
         // login post user
-        app.post('/user-login', async (req, res) => {
+        app.post('/login', async (req, res) => {
             // console.log(req.body);
             const { email, password } = req.body;
 
@@ -199,8 +199,9 @@ async function run() {
 
                     if (checkUser) {
                         const matchPassword = await bcrypt.compare(password, checkUser.password);
+                        const isLoggedIn = await userLogin.findOne({ email: email });
 
-                        if (matchPassword) {
+                        if (matchPassword && !isLoggedIn) {
 
                             const token = jwt.sign({
                                 id: checkUser._id,
@@ -227,8 +228,11 @@ async function run() {
                                 successMessage: 'Successfully login',
                                 token
                             });
-                        } else {
+                        } else if (!matchPassword && isLoggedIn) {
                             error = "Your password didn't match";
+                            res.json({ error });
+                        } else if (matchPassword && isLoggedIn) {
+                            error = "You are already logged in";
                             res.json({ error });
                         }
                     } else {
@@ -396,6 +400,18 @@ async function run() {
                 console.log(error);
             }
         });
+
+        app.delete('/logout/:id', async (req, res) => {
+            // console.log('Logout', req.params.id);
+            const id = req.params.id;
+            const result = await userLogin.deleteOne({
+                _id: ObjectId(id),
+            });
+            console.log('Logout result', result);
+            res.send({
+                successMessage: true
+            })
+        })
 
     }
     finally {
