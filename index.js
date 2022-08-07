@@ -5,35 +5,157 @@ const bcrypt = require('bcrypt');
 const validator = require('validator');
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
-// const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 dotenv.config();
 const { MongoClient, ObjectId } = require('mongodb');
-const { authMiddleware } = require('./middleware/authMiddleware');
 const PORT = process.env.PORT || 5000;
 
-// `mongodb://[${process.env.DB_USER}:${process.env.DB_PASS}@]host1[:port1][,...hostN[:portN]][/[defaultauthdb][?options]]`
-
-// const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.q3g5t.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
-
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.q3g5t.mongodb.net/?retryWrites=true&w=majority`
-// const uri = `mongodb://[process.env.DB_USER:process.env.DB_PASS@]`;
+
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
 
 app.use(cors());
-// app.use(cors({
-//     origin: ["http://localhost:3000", "http://localhost:5000"],
-//     // credentials: true,
-// }));
-// app.use(express.json());
-// app.use(bodyParser.json());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true, parameterLimit: 50000 }));
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({ limit: "50mb", extended: true, parameterLimit: 50000 }));
 app.use(cookieParser());
+
+var http = require('http').Server(app);
+var io = require('socket.io')(http, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST"]
+    }
+});
+
+
+// ----------------------------  socket code start ------------------------------- //
+
+let users = [];
+
+const addUser = (userId, socketId, userInfo) => {
+    const checkUser = users.some(user => user.userId === userId);
+
+    if (!checkUser) {
+        users.push({
+            userId,
+            socketId,
+            userInfo
+        })
+    }
+}
+
+const removeUser = socketId => {
+    users = users.filter(user => user.socketId !== socketId);
+}
+
+const findUser = id => {
+    const result = users.find(user => user.userId === id);
+    return result;
+};
+
+const userLogout = userId => {
+    users = users.filter(user => user.userId !== userId);
+};
+
+io.on('connection', socket => {
+    // console.log('Socket is running....');
+
+    socket.on('addUser', (userId, userInfo) => {
+        addUser(userId, socket.id, userInfo);
+        io.emit('getUser', users);
+
+        const restUsers = users.filter(user => user.userId !== userId);
+        const newRes = 'add_new_user';
+        for (let i = 0; i < restUsers.length; i++) {
+            socket.to(restUsers[i].socketId).emit('add_new_user', newRes)
+        };
+    });
+
+    socket.on('sendMessage', data => {
+        const user = findUser(data.receiverId);
+
+        // console.log(data);
+
+        if (user !== undefined) {
+            socket.to(user.socketId).emit('getMessage', {
+                uid: data.uid,
+                senderId: data.senderId,
+                senderName: data.senderName,
+                receiverId: data.receiverId,
+                receiverName: data.receiverName,
+                createdAt: data.time,
+                status: data.status,
+                message: {
+                    text: data.message,
+                    image: data.image
+                }
+            })
+        }
+        // console.log('get', data);
+    })
+
+    socket.on('typing', data => {
+        const user = findUser(data.receiverId);
+
+        // console.log(data);
+
+        if (user !== undefined) {
+            socket.to(user.socketId).emit('getTyping', {
+                senderId: data.senderId,
+                receiverId: data.receiverId,
+                message: data.message
+            })
+        }
+    });
+
+    socket.on('seenSMS', sms => {
+        console.log('seen', sms);
+        const user = findUser(sms.senderId);
+        if (user !== undefined) {
+            socket.to(user.socketId).emit('seenSmsRes', {
+                ...sms,
+                status: 'seen'
+            })
+        }
+    });
+
+    socket.on('deliveredSMS', sms => {
+        console.log('delivered', sms);
+        const user = findUser(sms.senderId);
+        if (user !== undefined) {
+            socket.to(user.socketId).emit('deliveredSmsRes', {
+                ...sms,
+                status: 'delivered'
+            })
+        }
+    });
+
+    socket.on('updateSeenSMS', sms => {
+        console.log('updateSeenSMS', sms);
+        const user = findUser(sms.senderId);
+        if (user !== undefined) {
+            socket.to(user.socketId).emit('updateSeenSMSRes', {
+                ...sms,
+                status: 'seen'
+            })
+        }
+    });
+
+    socket.on('logout', userInfo => {
+        userLogout(userInfo.id);
+    })
+
+    socket.on('disconnect', () => {
+        removeUser(socket.id);
+        io.emit('getUser', users);
+    })
+});
+
+// ------------------------------------ Start Server Code ------------------------ //
 
 async function run() {
     try {
@@ -145,10 +267,6 @@ async function run() {
                             expires: new Date(Date.now() + process.env.COOKIE_EXP * 24 * 60 * 60 * 1000)
                         }
 
-                        // res.status(201).cookie('authToken', token, options).json({
-                        //     successMessage: 'Successfully Registered',
-                        //     token
-                        // });
                         res.json({
                             successMessage: 'Successfully Registered',
                             token
@@ -220,12 +338,8 @@ async function run() {
                                 expires: new Date(Date.now() + process.env.COOKIE_EXP * 24 * 60 * 60 * 1000)
                             }
 
-                            // res.status(201).cookie('authToken', token, options).json({
-                            //     successMessage: 'Successfully login',
-                            //     token
-                            // });
                             res.json({
-                                successMessage: 'Successfully login',
+                                successMessage: 'Successfully Login',
                                 token
                             });
                         } else if (!matchPassword && isLoggedIn) {
@@ -244,22 +358,7 @@ async function run() {
                     res.json({ error });
                 }
             }
-        })
-
-
-
-        // const verifyLoginUser = async (req, res, next) => {
-        //     // const { authToken } = req.cookies;
-        //     console.log(authToken);
-        //     // if(authToken){
-
-        //     //     const deCodeToken = await jwt.verify(authToken,process.env.SECRET);
-        //     //     req.myId =deCodeToken.id; 
-        //     //     next();
-        //     // }else{
-        //     //     res.status(400).json({error:{errorMessage:['please login']}});
-        //     // }
-        // }
+        });
 
         // get friends
         app.get('/get-friends', async (req, res) => {
@@ -300,7 +399,6 @@ async function run() {
             try {
 
                 await sendMessage.insertOne({
-                    // uid: new Date().getTime().toString(36) + Math.floor(new Date().valueOf() * Math.random()),
                     uid,
                     senderId,
                     senderName,
@@ -317,7 +415,6 @@ async function run() {
                     success: true,
                     // message: newMessage
                     message: {
-                        // uid: new Date().getTime().toString(36) + Math.floor(new Date().valueOf() * Math.random()),
                         uid,
                         senderId,
                         senderName,
@@ -341,7 +438,6 @@ async function run() {
             try {
 
                 await sendMessage.insertOne({
-                    // uid: new Date().getTime().toString(36) + Math.floor(new Date().valueOf() * Math.random()),
                     uid,
                     senderId,
                     senderName,
@@ -358,7 +454,6 @@ async function run() {
                     success: true,
                     // message: imgSMS
                     message: {
-                        // uid: new Date().getTime().toString(36) + Math.floor(new Date().valueOf() * Math.random()),
                         uid,
                         senderId,
                         senderName,
@@ -422,9 +517,8 @@ run().catch(console.dir);
 
 app.get('/', (req, res) => {
     res.send('ok');
-})
+});
 
-
-app.listen(PORT, () => {
+http.listen(PORT, () => {
     console.log(`server is running on port ${PORT}`);
 })
