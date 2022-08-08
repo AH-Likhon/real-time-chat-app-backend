@@ -179,7 +179,7 @@ async function run() {
         })
 
         // insert user
-        app.post('/users', async (req, res) => {
+        app.post('/users', cors(), async (req, res) => {
 
             const {
                 userName,
@@ -292,7 +292,7 @@ async function run() {
 
 
         // login post user
-        app.post('/login', async (req, res) => {
+        app.post('/login', cors(), async (req, res) => {
             // console.log(req.body);
             const { email, password } = req.body;
 
