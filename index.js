@@ -16,7 +16,8 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
 app.use(cors({
-    origin: 'http://localhost:3000',
+    origin: 'https://fierce-bastion-47070.herokuapp.com',
+    optionsSuccessStatus: 200
 }));
 
 app.use(express.json({ limit: '50mb' }));
