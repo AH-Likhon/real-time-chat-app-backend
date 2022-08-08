@@ -229,60 +229,62 @@ async function run() {
                 res.json({ error });
             } else {
 
-                try {
-                    const checkUser = await users.findOne({ email: email });
-                    // console.log(checkUser);
+                const checkUser = await users.findOne({ email: email });
+                // console.log(checkUser);
 
-                    if (checkUser) {
-                        error = "Your email is already registered";
-                        res.json({ error });
-                    } else {
-                        const user = await users.insertOne({
-                            userName,
-                            email,
-                            password: await bcrypt.hash(password, 10),
-                            image,
-                            expires: new Date(Date.now() + process.env.COOKIE_EXP * 24 * 60 * 60 * 1000),
-                            registerTime: new Date()
-                        });
-
-
-
-                        const token = jwt.sign({
-                            userName,
-                            email,
-                            password: await bcrypt.hash(password, 10),
-                            image,
-                            expires: new Date(Date.now() + process.env.COOKIE_EXP * 24 * 60 * 60 * 1000),
-                            registerTime: new Date()
-                        }, process.env.SECRET, {
-                            expiresIn: process.env.TOKEN_EXP
-                        });
-                        // console.log(token);
-
-                        // const result = user;
-                        // console.log(user);
-
-                        const options = {
-                            expires: new Date(Date.now() + process.env.COOKIE_EXP * 24 * 60 * 60 * 1000)
-                        }
-
-                        res.json({
-                            successMessage: 'Successfully Registered',
-                            token
-                        });
-
-                        // res.json(token);
-                    }
-                    // console.log(error);
-
-                } catch (error) {
-                    error = "Internal server error";
+                if (checkUser) {
+                    error = "Your email is already registered";
                     res.json({ error });
-                }
+                } else {
+                    const user = await users.insertOne({
+                        userName,
+                        email,
+                        password: await bcrypt.hash(password, 10),
+                        image,
+                        expires: new Date(Date.now() + process.env.COOKIE_EXP * 24 * 60 * 60 * 1000),
+                        registerTime: new Date()
+                    });
 
-            }
-        });
+
+
+                    const token = jwt.sign({
+                        userName,
+                        email,
+                        password: await bcrypt.hash(password, 10),
+                        image,
+                        expires: new Date(Date.now() + process.env.COOKIE_EXP * 24 * 60 * 60 * 1000),
+                        registerTime: new Date()
+                    }, process.env.SECRET, {
+                        expiresIn: process.env.TOKEN_EXP
+                    });
+                    // console.log(token);
+
+                    // const result = user;
+                    // console.log(user);
+
+                    const options = {
+                        expires: new Date(Date.now() + process.env.COOKIE_EXP * 24 * 60 * 60 * 1000)
+                    }
+
+                    res.json({
+                        successMessage: 'Successfully Registered',
+                        token
+                    });
+
+                    // res.json(token);
+
+                    // try {
+
+                    //     }
+                    //     // console.log(error);
+
+                    // } catch (error) {
+                    //     error = "Internal server error";
+                    //     res.json({ error });
+                    // }
+
+                }
+            });
 
 
         // login post user
@@ -312,51 +314,53 @@ async function run() {
                 res.json({ error });
             } else {
 
-                try {
-                    const checkUser = await users.findOne({ email: email });
+                const checkUser = await users.findOne({ email: email });
 
-                    if (checkUser) {
-                        const matchPassword = await bcrypt.compare(password, checkUser.password);
-                        const isLoggedIn = await userLogin.findOne({ email: email });
+                if (checkUser) {
+                    const matchPassword = await bcrypt.compare(password, checkUser.password);
+                    const isLoggedIn = await userLogin.findOne({ email: email });
 
-                        if (matchPassword && !isLoggedIn) {
+                    if (matchPassword && !isLoggedIn) {
 
-                            const token = jwt.sign({
-                                id: checkUser._id,
-                                email: checkUser.email,
-                                userName: checkUser.userName,
-                                image: checkUser.image,
-                                registerTime: checkUser.registerTime
-                            }, process.env.SECRET, {
-                                expiresIn: process.env.TOKEN_EXP
-                            });
+                        const token = jwt.sign({
+                            id: checkUser._id,
+                            email: checkUser.email,
+                            userName: checkUser.userName,
+                            image: checkUser.image,
+                            registerTime: checkUser.registerTime
+                        }, process.env.SECRET, {
+                            expiresIn: process.env.TOKEN_EXP
+                        });
 
-                            const result = await userLogin.insertOne(checkUser);
-                            // console.log(result);
+                        const result = await userLogin.insertOne(checkUser);
+                        // console.log(result);
 
-                            const options = {
-                                expires: new Date(Date.now() + process.env.COOKIE_EXP * 24 * 60 * 60 * 1000)
-                            }
-
-                            res.json({
-                                successMessage: 'Successfully Login',
-                                token
-                            });
-                        } else if (!matchPassword && isLoggedIn) {
-                            error = "Your password didn't match";
-                            res.json({ error });
-                        } else if (matchPassword && isLoggedIn) {
-                            error = "You are already logged in";
-                            res.json({ error });
+                        const options = {
+                            expires: new Date(Date.now() + process.env.COOKIE_EXP * 24 * 60 * 60 * 1000)
                         }
-                    } else {
-                        error = "Your email didn't find";
+
+                        res.json({
+                            successMessage: 'Successfully Login',
+                            token
+                        });
+                    } else if (!matchPassword && isLoggedIn) {
+                        error = "Your password didn't match";
+                        res.json({ error });
+                    } else if (matchPassword && isLoggedIn) {
+                        error = "You are already logged in";
                         res.json({ error });
                     }
-                } catch (error) {
-                    error = "Internal Server Error";
+                } else {
+                    error = "Your email didn't find";
                     res.json({ error });
                 }
+
+                // try {
+
+                // } catch (error) {
+                //     error = "Internal Server Error";
+                //     res.json({ error });
+                // }
             }
         });
 
