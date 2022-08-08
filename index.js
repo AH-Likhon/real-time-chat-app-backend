@@ -17,7 +17,7 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 
 
 const corsOptions = {
-    origin: 'https://stalwart-unicorn-e6d085.netlify.app',
+    origin: 'https://ah-real-time-chat-app.netlify.app',
     credentials: true,
     optionSuccessStatus: 200
 }
