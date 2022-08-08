@@ -19,14 +19,24 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 //     origin: 'http://localhost:3000/',
 //     optionsSuccessStatus: 200
 // }));
+// const corsOptions = {
+//     origin: 'http://localhost:4000',
+//     credentials: true,
+//     optionSuccessStatus: 200
+// }
+// app.use(cors(corsOptions));
 
+app.use(function (req, res, next) {
 
-// I have made the request with and without app.options
-app.options("*", cors())
+    res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
+    res.setHeader('Access-Control-Allow-Credentials', true);
 
-// allowedDomains = [Array of allowed sites] 
-// My website is listed in the array as "https://..."
-app.use(cors({ origin: allowedDomains, credentials: true }));
+    next();
+});
+
+app.use(cors());
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true, parameterLimit: 50000 }));
@@ -302,6 +312,7 @@ async function run() {
         // login post user
         app.post('/login', async (req, res) => {
             // console.log(req.body);
+            res.header("Access-Control-Allow-Origin", "*");
             const { email, password } = req.body;
 
             // const checkUser = await userLogin.findOne({ email: email });
