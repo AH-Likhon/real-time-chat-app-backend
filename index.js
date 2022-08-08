@@ -272,19 +272,19 @@ async function run() {
                     });
 
                     // res.json(token);
-
-                    // try {
-
-                    //     }
-                    //     // console.log(error);
-
-                    // } catch (error) {
-                    //     error = "Internal server error";
-                    //     res.json({ error });
-                    // }
-
                 }
-            });
+                // console.log(error);
+
+                // try {
+
+
+                // } catch (error) {
+                //     error = "Internal server error";
+                //     res.json({ error });
+                // }
+
+            }
+        });
 
 
         // login post user
