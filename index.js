@@ -19,24 +19,14 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 //     origin: 'http://localhost:3000/',
 //     optionsSuccessStatus: 200
 // }));
-// const corsOptions = {
-//     origin: 'http://localhost:4000',
-//     credentials: true,
-//     optionSuccessStatus: 200
-// }
-// app.use(cors(corsOptions));
 
-app.use(function (req, res, next) {
 
-    res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
-    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
-    res.setHeader('Access-Control-Allow-Credentials', true);
-
-    next();
-});
-
-app.use(cors());
+const corsOptions = {
+    origin: 'http://localhost:3000',
+    credentials: true,
+    optionSuccessStatus: 200
+}
+app.use(cors(corsOptions));
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true, parameterLimit: 50000 }));
@@ -312,7 +302,6 @@ async function run() {
         // login post user
         app.post('/login', async (req, res) => {
             // console.log(req.body);
-            res.header("Access-Control-Allow-Origin", "*");
             const { email, password } = req.body;
 
             // const checkUser = await userLogin.findOne({ email: email });
