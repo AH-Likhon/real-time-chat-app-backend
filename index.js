@@ -11,11 +11,13 @@ dotenv.config();
 const { MongoClient, ObjectId } = require('mongodb');
 const PORT = process.env.PORT || 5000;
 
+// <---------------------------- Database Connection ----------------------------> //
+
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.q3g5t.mongodb.net/?retryWrites=true&w=majority`
 
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
-
+// <-----------------------------  cors option ----------------------------------> //
 const corsOptions = {
     origin: 'https://ah-real-time-chat-app.netlify.app',
     credentials: true,
@@ -29,9 +31,9 @@ app.use(bodyParser.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({ limit: "50mb", extended: true, parameterLimit: 50000 }));
 app.use(cookieParser());
 
-
-var http = require('http').Server(app);
-var io = require('socket.io')(http, {
+// <---------------------------  socket server ------------------------------> //
+const http = require('http').Server(app);
+const io = require('socket.io')(http, {
     cors: {
         origin: "*",
         methods: ["GET", "POST"]
@@ -39,7 +41,7 @@ var io = require('socket.io')(http, {
 });
 
 
-// ----------------------------  socket code start ------------------------------- //
+// <---------------------------  socket code start ------------------------------> //
 
 let users = [];
 
@@ -162,7 +164,7 @@ io.on('connection', socket => {
     })
 });
 
-// ------------------------------------ Start Server Code ------------------------ //
+// <----------------------------------- Start Server Code -----------------------> //
 
 async function run() {
     try {
@@ -172,8 +174,8 @@ async function run() {
         const userLogin = database.collection('login');
         const sendMessage = database.collection('message');
 
+        // <----------------------- Get Specific User API -----------------------> //
 
-        // get a user
         app.get('/users/:email', async (req, res) => {
             const email = req.params.email;
             const query = { email: email };
@@ -181,7 +183,8 @@ async function run() {
             res.json(user)
         })
 
-        // insert user
+        // <----------------------- Registration User API -----------------------> //
+
         app.post('/users', async (req, res) => {
 
             const {
@@ -236,65 +239,64 @@ async function run() {
                 res.json({ error });
             } else {
 
-                const checkUser = await users.findOne({ email: email });
-                // console.log(checkUser);
+                try {
+                    const checkUser = await users.findOne({ email: email });
+                    // console.log(checkUser);
 
-                if (checkUser) {
-                    error = "Your email is already registered";
-                    res.json({ error });
-                } else {
-                    const user = await users.insertOne({
-                        userName,
-                        email,
-                        password: await bcrypt.hash(password, 10),
-                        image,
-                        expires: new Date(Date.now() + process.env.COOKIE_EXP * 24 * 60 * 60 * 1000),
-                        registerTime: new Date()
-                    });
+                    if (checkUser) {
+                        error = "Your email is already registered";
+                        res.json({ error });
+                    } else {
+                        const user = await users.insertOne({
+                            userName,
+                            email,
+                            password: await bcrypt.hash(password, 10),
+                            image,
+                            expires: new Date(Date.now() + process.env.COOKIE_EXP * 24 * 60 * 60 * 1000),
+                            registerTime: new Date()
+                        });
 
 
 
-                    const token = jwt.sign({
-                        userName,
-                        email,
-                        password: await bcrypt.hash(password, 10),
-                        image,
-                        expires: new Date(Date.now() + process.env.COOKIE_EXP * 24 * 60 * 60 * 1000),
-                        registerTime: new Date()
-                    }, process.env.SECRET, {
-                        expiresIn: process.env.TOKEN_EXP
-                    });
-                    // console.log(token);
+                        const token = jwt.sign({
+                            userName,
+                            email,
+                            password: await bcrypt.hash(password, 10),
+                            image,
+                            expires: new Date(Date.now() + process.env.COOKIE_EXP * 24 * 60 * 60 * 1000),
+                            registerTime: new Date()
+                        }, process.env.SECRET, {
+                            expiresIn: process.env.TOKEN_EXP
+                        });
+                        // console.log(token);
 
-                    // const result = user;
-                    // console.log(user);
+                        // const result = user;
+                        // console.log(user);
 
-                    const options = {
-                        expires: new Date(Date.now() + process.env.COOKIE_EXP * 24 * 60 * 60 * 1000)
+                        const options = {
+                            expires: new Date(Date.now() + process.env.COOKIE_EXP * 24 * 60 * 60 * 1000)
+                        }
+
+                        res.json({
+                            successMessage: 'Successfully Registered',
+                            token
+                        });
+
+                        // res.json(token);
                     }
+                    // console.log(error);
 
-                    res.json({
-                        successMessage: 'Successfully Registered',
-                        token
-                    });
-
-                    // res.json(token);
+                } catch (error) {
+                    error = "Internal server error";
+                    res.json({ error });
                 }
-                // console.log(error);
-
-                // try {
-
-
-                // } catch (error) {
-                //     error = "Internal server error";
-                //     res.json({ error });
-                // }
 
             }
         });
 
 
-        // login post user
+        // <------------------------------ Login User API -----------------------> //
+
         app.post('/login', async (req, res) => {
             // console.log(req.body);
             const { email, password } = req.body;
@@ -321,61 +323,59 @@ async function run() {
                 res.json({ error });
             } else {
 
-                const checkUser = await users.findOne({ email: email });
+                try {
+                    const checkUser = await users.findOne({ email: email });
 
-                if (checkUser) {
-                    const matchPassword = await bcrypt.compare(password, checkUser.password);
-                    const isLoggedIn = await userLogin.findOne({ email: email });
+                    if (checkUser) {
+                        const matchPassword = await bcrypt.compare(password, checkUser.password);
+                        const isLoggedIn = await userLogin.findOne({ email: email });
 
-                    if (matchPassword && !isLoggedIn) {
+                        if (matchPassword && !isLoggedIn) {
 
-                        const token = jwt.sign({
-                            id: checkUser._id,
-                            email: checkUser.email,
-                            userName: checkUser.userName,
-                            image: checkUser.image,
-                            registerTime: checkUser.registerTime
-                        }, process.env.SECRET, {
-                            expiresIn: process.env.TOKEN_EXP
-                        });
+                            const token = jwt.sign({
+                                id: checkUser._id,
+                                email: checkUser.email,
+                                userName: checkUser.userName,
+                                image: checkUser.image,
+                                registerTime: checkUser.registerTime
+                            }, process.env.SECRET, {
+                                expiresIn: process.env.TOKEN_EXP
+                            });
 
-                        const result = await userLogin.insertOne(checkUser);
-                        // console.log(result);
+                            const result = await userLogin.insertOne(checkUser);
+                            // console.log(result);
 
-                        const options = {
-                            expires: new Date(Date.now() + process.env.COOKIE_EXP * 24 * 60 * 60 * 1000)
+                            const options = {
+                                expires: new Date(Date.now() + process.env.COOKIE_EXP * 24 * 60 * 60 * 1000)
+                            }
+
+                            res.json({
+                                successMessage: 'Successfully Login',
+                                token
+                            });
+                        } else if (!matchPassword && isLoggedIn) {
+                            error = "Your password didn't match";
+                            res.json({ error });
+                        } else if (matchPassword && isLoggedIn) {
+                            error = "You are already logged in";
+                            res.json({ error });
                         }
-
-                        res.json({
-                            successMessage: 'Successfully Login',
-                            token
-                        });
-                    } else if (!matchPassword && isLoggedIn) {
-                        error = "Your password didn't match";
-                        res.json({ error });
-                    } else if (matchPassword && isLoggedIn) {
-                        error = "You are already logged in";
+                    } else {
+                        error = "Your email didn't find";
                         res.json({ error });
                     }
-                } else {
-                    error = "Your email didn't find";
+                } catch (error) {
+                    error = "Internal Server Error";
                     res.json({ error });
                 }
-
-                // try {
-
-                // } catch (error) {
-                //     error = "Internal Server Error";
-                //     res.json({ error });
-                // }
             }
         });
 
-        // get friends
+        // <-------------------------- Get Friends API --------------------------> //
+
         app.get('/get-friends', async (req, res) => {
 
             // console.log('Body', req.body);
-
             try {
                 const getFriends = await users.find({}).toArray();
                 res.json({
@@ -388,7 +388,8 @@ async function run() {
         })
 
 
-        // get all send message
+        // <------------------------ Get All Messages API -----------------------> //
+
         app.get('/get-message', async (req, res) => {
             try {
                 const getAllMessage = await sendMessage.find({}).toArray();
@@ -403,7 +404,8 @@ async function run() {
         })
 
 
-        // insert message
+        // <------------------------- Insert Message API ------------------------> //
+
         app.post('/send-message', async (req, res) => {
             const { senderId, senderName, receiverId, message, uid, status } = req.body;
 
@@ -442,6 +444,8 @@ async function run() {
                 res.json({ errorMessage: 'Internal Server Error' });
             }
         })
+
+        // <--------------------- Insert Image Message API ----------------------> //
 
         app.post('/image-message', async (req, res) => {
             const { senderId, senderName, receiverId, image, uid, status } = req.body;
@@ -483,6 +487,8 @@ async function run() {
         })
 
 
+        // <------------------ Updated Seen/Unseen Message API ------------------> //
+
         app.put('/seen-sms', async (req, res) => {
             // console.log("Seen SMS Body: ", req.body.uid);
             try {
@@ -506,6 +512,8 @@ async function run() {
                 console.log(error);
             }
         });
+
+        // <---------------------------- User Logout API ------------------------> //
 
         app.delete('/logout/:id', async (req, res) => {
             // console.log('Logout', req.params.id);
