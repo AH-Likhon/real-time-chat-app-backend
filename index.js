@@ -15,10 +15,18 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster
 
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
-app.use(cors({
-    origin: 'http://localhost:3000',
-    optionsSuccessStatus: 200
-}));
+// app.use(cors({
+//     origin: 'http://localhost:3000/',
+//     optionsSuccessStatus: 200
+// }));
+
+
+// I have made the request with and without app.options
+app.options("*", cors())
+
+// allowedDomains = [Array of allowed sites] 
+// My website is listed in the array as "https://..."
+app.use(cors({ origin: allowedDomains, credentials: true }));
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true, parameterLimit: 50000 }));
@@ -179,7 +187,7 @@ async function run() {
         })
 
         // insert user
-        app.post('/users', cors(), async (req, res) => {
+        app.post('/users', async (req, res) => {
 
             const {
                 userName,
@@ -292,7 +300,7 @@ async function run() {
 
 
         // login post user
-        app.post('/login', cors(), async (req, res) => {
+        app.post('/login', async (req, res) => {
             // console.log(req.body);
             const { email, password } = req.body;
 
