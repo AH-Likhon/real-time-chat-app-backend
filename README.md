@@ -1,6 +1,6 @@
-<h3>Real Time Chat Web Application</h3>
+<h2>Real Time Chat Web Application</h2>
 
-Live Site: https://ah-real-time-chat-app.netlify.app/
+Live Site: https://real-time-chat-web-app.netlify.app
 
 Key Points:
 - This real-time chat application allows users to communicate with one another in real-time via messaging. 

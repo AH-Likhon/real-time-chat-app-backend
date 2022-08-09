@@ -19,8 +19,8 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 
 // <-----------------------------  cors option ----------------------------------> //
 const corsOptions = {
-    origin: 'http://localhost:3000',
-    // origin: 'https://real-time-chat-web-app.netlify.app',
+    // origin: 'http://localhost:3000',
+    origin: 'https://real-time-chat-web-app.netlify.app',
     credentials: true,
     optionSuccessStatus: 200
 }
