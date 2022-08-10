@@ -7,7 +7,7 @@ Key Points:
 - Firstly, users need to register using email and other information and then log in. Earlier, the registered user would directly login, and they could also log out after completing their chat. 
 - Users can send images and emojis as well as texts. Users can also see which friends are active or not, and they can also see if their messages are delivered, seen, or unseen. Users can also search for their friends.
 
-Technologeis Used:
+Technologies Used:
 - JavaScript
 - React
 - Node
