@@ -33,7 +33,7 @@ app.use(bodyParser.urlencoded({ limit: "50mb", extended: true, parameterLimit: 5
 app.use(cookieParser());
 
 // <---------------------------  socket server ------------------------------> //
-var http = require('http').Server(app);
+var http = require('https').Server(app);
 var io = require('socket.io')(http, {
     cors: {
         origin: "*",
