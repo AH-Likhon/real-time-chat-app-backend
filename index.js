@@ -19,8 +19,8 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 
 // <-----------------------------  cors option ----------------------------------> //
 const corsOptions = {
-    origin: 'http://localhost:3000',
-    // origin: 'https://real-time-chat-web-app.netlify.app',
+    // origin: 'http://localhost:3000',
+    origin: 'https://real-time-chat-web-app.netlify.app',
     credentials: true,
     optionSuccessStatus: 200
 }
@@ -33,7 +33,7 @@ app.use(bodyParser.urlencoded({ limit: "50mb", extended: true, parameterLimit: 5
 app.use(cookieParser());
 
 // <---------------------------  socket server ------------------------------> //
-var http = require('https').Server(app);
+var http = require('http').Server(app);
 var io = require('socket.io')(http, {
     cors: {
         origin: "*",
