@@ -19,7 +19,7 @@ Technologies Used:
 - Socket.io
 - Sass
 
-API: https://fierce-bastion-47070.herokuapp.com
+API: https://real-time-chat-backend.onrender.com
 
 About API Integration and Redux:
 - I did all CRUD operations with the above API from the frontend. I used the API with redux, so I sent data from the action to the reducer. In action, I maintained the API's CRUD operation during the pass data to the reducer using dispatch and payload method. After that, the reducer updates the state with payload data. Here I have basically divided the action and reducer into two parts.
